@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum TokenType {
     // Single-character tokens.
     LEFT_PAREN,

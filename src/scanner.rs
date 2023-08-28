@@ -1,7 +1,33 @@
 use crate::{
     error::LoxError,
+    hashmap,
     token::{Object, Token, TokenType},
 };
+use lazy_static::lazy_static;
+use std::collections::HashMap;
+
+lazy_static! {
+    static ref KEY_WORDS: HashMap<String, TokenType> = {
+        hashmap! {
+            String::from("and") => TokenType::AND,
+            String::from("class") => TokenType::CLASS,
+            String::from("else") => TokenType::ELSE,
+            String::from("false") => TokenType::FALSE,
+            String::from("for") => TokenType::FOR,
+            String::from("fun") => TokenType::FUN,
+            String::from("if") => TokenType::IF,
+            String::from("nil") => TokenType::NIL,
+            String::from("or") => TokenType::OR,
+            String::from("print") => TokenType::PRINT,
+            String::from("return") => TokenType::RETURN,
+            String::from("super") => TokenType::SUPER,
+            String::from("this") => TokenType::THIS,
+            String::from("true") => TokenType::TRUE,
+            String::from("var") => TokenType::VAR,
+            String::from("while") => TokenType::WHILE
+        }
+    };
+}
 
 pub struct Scanner {
     source: Vec<char>,
@@ -100,12 +126,15 @@ impl Scanner {
     }
 
     fn identifier(&mut self) {
-        {
-            while self.is_alpha_number(self.peek()) {
-                self.advance();
-            }
+        while self.is_alpha_number(self.peek()) {
+            self.advance();
         }
-        self.add_token(TokenType::IDENTIFIER);
+        let text: String = self.source[self.start..self.current].iter().collect();
+        if KEY_WORDS.contains_key(&text) {
+            self.add_token(*KEY_WORDS.get(&text).unwrap());
+        } else {
+            self.add_token(TokenType::IDENTIFIER);
+        }
     }
 
     fn number(&mut self) -> Result<(), LoxError> {
@@ -163,7 +192,7 @@ impl Scanner {
     }
 
     fn is_alpha(&self, c: char) -> bool {
-        c >= 'a' && c <= 'z' && c >= 'A' && c <= 'Z' || c == '_'
+        c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_'
     }
 
     fn is_alpha_number(&self, c: char) -> bool {
