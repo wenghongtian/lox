@@ -30,3 +30,10 @@ pub struct UnaryExpr {
     pub operator: Token,
     pub right: Box<Expr>,
 }
+
+pub trait Visitor<T> {
+    fn visit_binary_expr(bin_expr: BinaryExpr) -> T;
+    fn visit_grouping_expr(gouping_expr: GroupingExpr) -> T;
+    fn visit_literal_expr(literal_expr: LiteralExpr) -> T;
+    fn visit_unary_expr(unary_expr: UnaryExpr) -> T;
+}

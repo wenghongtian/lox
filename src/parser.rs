@@ -134,7 +134,9 @@ impl Parser {
 
         if self.match_token(TokenType::STRING) || self.match_token(TokenType::NUMBER) {
             let value = self.previous().literal.clone();
-            return Ok(Expr::Literal(LiteralExpr { value: value.unwrap() }));
+            return Ok(Expr::Literal(LiteralExpr {
+                value: value.unwrap(),
+            }));
         }
 
         if self.match_token(TokenType::LEFT_PAREN) {
