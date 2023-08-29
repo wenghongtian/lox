@@ -228,6 +228,6 @@ impl Scanner {
     }
     fn add_token_object(&mut self, tty: TokenType, literal: Option<Object>) {
         let str: String = self.source[self.start..self.current].iter().collect();
-        self.tokens.push(Token::new(tty, str, None, self.line))
+        self.tokens.push(Token::new(tty, str, literal, self.line))
     }
 }

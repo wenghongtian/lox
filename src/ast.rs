@@ -1,47 +1,32 @@
-use crate::{
-    error::LoxError,
-    token::{Object, Token},
-};
+use crate::token::{Object, Token};
 
+#[derive(Debug)]
 pub enum Expr {
     Binary(BinaryExpr),
     Grouping(GroupingExpr),
     Literal(LiteralExpr),
     Unary(UnaryExpr),
 }
-
-/**
-*  expression → literal
-              | unary
-              | binary
-              | grouping ;
-
-   literal    → NUMBER | STRING | "true" | "false" | "nil" ;
-   grouping   → "(" expression ")" ;
-   unary      → ( "-" | "!" ) expression ;
-   binary     → expression operator expression ;
-   operator   → "==" | "!=" | "<" | "<=" | ">" | ">="
-              | "+"  | "-"  | "*" | "/" ;
-*
-*/
-
-trait Visitor<T> {
-    type ExprType;
-    fn visit(&self) -> Result<Self::ExprType, LoxError>;
-}
+#[derive(Debug)]
 
 pub struct BinaryExpr {
-    left: Box<Expr>,
-    right: Box<Expr>,
-    operator: Token,
+    pub left: Box<Expr>,
+    pub right: Box<Expr>,
+    pub operator: Token,
 }
+#[derive(Debug)]
+
 pub struct GroupingExpr {
-    expression: Box<Expr>,
+    pub expression: Box<Expr>,
 }
+#[derive(Debug)]
+
 pub struct LiteralExpr {
-    value: Object,
+    pub value: Object,
 }
+#[derive(Debug)]
+
 pub struct UnaryExpr {
-    operator: Token,
-    right: Box<Expr>,
+    pub operator: Token,
+    pub right: Box<Expr>,
 }

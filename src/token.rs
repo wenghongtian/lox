@@ -3,27 +3,27 @@ use std::fmt;
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum TokenType {
     // Single-character tokens.
-    LEFT_PAREN,
-    RIGHT_PAREN,
-    LEFT_BRACE,
-    RIGHT_BRACE,
-    COMMA,
-    DOT,
-    MINUS,
-    PLUS,
-    SEMICOLON,
-    SLASH,
-    STAR,
+    LEFT_PAREN,  // (
+    RIGHT_PAREN, // )
+    LEFT_BRACE,  // {}
+    RIGHT_BRACE, // }
+    COMMA,       // ,
+    DOT,         // .
+    MINUS,       //+
+    PLUS,        //-
+    SEMICOLON,   //;
+    SLASH,       // /
+    STAR,        // *
 
     // One or two character tokens.
-    BANG,
-    BANG_EQUAL,
-    EQUAL,
-    EQUAL_EQUAL,
-    GREATER,
-    GREATER_EQUAL,
-    LESS,
-    LESS_EQUAL,
+    BANG,          // !
+    BANG_EQUAL,    // !=
+    EQUAL,         // =
+    EQUAL_EQUAL,   // ==
+    GREATER,       // >
+    GREATER_EQUAL, // >=
+    LESS,          // <
+    LESS_EQUAL,    // <=
 
     // Literals.
     IDENTIFIER,
@@ -51,7 +51,7 @@ pub enum TokenType {
     EOF,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Object {
     Num(f64),
     Str(String),
@@ -60,12 +60,12 @@ pub enum Object {
     False,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
-    tty: TokenType,
-    lexeme: String,
-    literal: Option<Object>,
-    line: usize,
+    pub tty: TokenType,
+    pub lexeme: String,
+    pub literal: Option<Object>,
+    pub line: usize,
 }
 
 impl Token {

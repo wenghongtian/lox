@@ -5,3 +5,4 @@ mod token;
 mod error;
 mod macros;
 mod ast;
+mod parser;
