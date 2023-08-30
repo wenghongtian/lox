@@ -1,4 +1,4 @@
-use crate::{error::LoxError, parser::Parser, scanner::Scanner};
+use crate::{error::LoxError, interpreter::Interpreter, parser::Parser, scanner::Scanner};
 
 pub struct Lox {
     pub had_error: bool,
@@ -22,6 +22,7 @@ impl Lox {
         let tokens = scanner.scan_tokens()?.clone();
 
         let mut parser = Parser::new(tokens);
+        let interpreter = Interpreter::new();
         let ast = parser.parse()?;
         println!("{:#?}", ast);
         Ok(())
