@@ -1,5 +1,8 @@
 use crate::{
-    ast::{BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr},
+    ast::{
+        BinaryExpr, Expr, ExpressionStmt, GroupingExpr, LiteralExpr, PrintStmt, Stmt, UnaryExpr,
+        VarStmt, VariableExpr,
+    },
     error::LoxError,
     lox::Lox,
     token::{Object, Token, TokenType},
@@ -30,8 +33,58 @@ impl Parser {
         Parser { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Result<Expr, LoxError> {
-        self.expression()
+    pub fn parse(&mut self) -> Result<Vec<Stmt>, LoxError> {
+        let mut statements = vec![];
+        while !self.is_at_end() {
+            statements.push(self.declaration()?);
+        }
+        Ok(statements)
+    }
+
+    fn declaration(&mut self) -> Result<Stmt, LoxError> {
+        if self.match_token(TokenType::VAR) {
+            self.var_declaration()
+        } else {
+            self.statement()
+        }
+    }
+
+    fn var_declaration(&mut self) -> Result<Stmt, LoxError> {
+        let name = self.consume(TokenType::IDENTIFIER, String::from("Expect variable name."))?;
+        let mut initializer = None;
+        if self.match_token(TokenType::EQUAL) {
+            initializer = Some(self.expression()?);
+        }
+        self.consume(
+            TokenType::SEMICOLON,
+            String::from("Expect ';' after variable declaration."),
+        );
+        Ok(Stmt::VarStmt(VarStmt { name, initializer }))
+    }
+
+    fn statement(&mut self) -> Result<Stmt, LoxError> {
+        if self.match_token(TokenType::PRINT) {
+            return self.print_statement();
+        }
+        self.expression_statement()
+    }
+
+    fn print_statement(&mut self) -> Result<Stmt, LoxError> {
+        let value = self.expression()?;
+        self.consume(
+            TokenType::SEMICOLON,
+            String::from("Expect ';' after value."),
+        )?;
+        Ok(Stmt::PrintStmt(PrintStmt { expression: value }))
+    }
+
+    fn expression_statement(&mut self) -> Result<Stmt, LoxError> {
+        let value = self.expression()?;
+        self.consume(
+            TokenType::SEMICOLON,
+            String::from("Expect ';' after value."),
+        )?;
+        Ok(Stmt::ExpressionStmt(ExpressionStmt { expression: value }))
     }
 
     fn expression(&mut self) -> Result<Expr, LoxError> {
@@ -45,9 +98,9 @@ impl Parser {
             let operator = self.previous().clone();
             let right = self.comparison()?;
             expr = Expr::Binary(BinaryExpr {
-                left: Box::from(expr),
+                left: Box::new(expr),
                 operator,
-                right: Box::from(right),
+                right: Box::new(right),
             })
         }
 
@@ -65,8 +118,8 @@ impl Parser {
             let operator = self.previous().clone();
             let right = self.term()?;
             expr = Expr::Binary(BinaryExpr {
-                left: Box::from(expr),
-                right: Box::from(right),
+                left: Box::new(expr),
+                right: Box::new(right),
                 operator,
             })
         }
@@ -79,11 +132,12 @@ impl Parser {
         while self.match_token(TokenType::MINUS) || self.match_token(TokenType::PLUS) {
             let operator = self.previous().clone();
             let right = self.factor()?;
-            expr = Expr::Binary(BinaryExpr {
-                left: Box::from(expr),
-                right: Box::from(right),
+            let bin_expr = BinaryExpr {
+                left: Box::new(expr),
+                right: Box::new(right),
                 operator,
-            })
+            };
+            expr = Expr::Binary(bin_expr);
         }
         Ok(expr)
     }
@@ -95,8 +149,8 @@ impl Parser {
             let operator = self.previous().clone();
             let right = self.unary()?;
             expr = Expr::Binary(BinaryExpr {
-                left: Box::from(expr),
-                right: Box::from(right),
+                left: Box::new(expr),
+                right: Box::new(right),
                 operator,
             })
         }
@@ -109,7 +163,7 @@ impl Parser {
             let right = self.unary()?;
             return Ok(Expr::Unary(UnaryExpr {
                 operator,
-                right: Box::from(right),
+                right: Box::new(right),
             }));
         }
         self.primary()
@@ -125,6 +179,12 @@ impl Parser {
         if self.match_token(TokenType::TRUE) {
             return Ok(Expr::Literal(LiteralExpr {
                 value: Object::True,
+            }));
+        }
+
+        if self.match_token(TokenType::IDENTIFIER) {
+            return Ok(Expr::Variable(VariableExpr {
+                name: self.previous().clone(),
             }));
         }
 
@@ -146,7 +206,7 @@ impl Parser {
                 "Expect ')' after expression.".to_string(),
             )?;
             return Ok(Expr::Grouping(GroupingExpr {
-                expression: Box::from(expr),
+                expression: Box::new(expr),
             }));
         }
 

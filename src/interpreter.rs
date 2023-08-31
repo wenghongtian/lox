@@ -6,7 +6,7 @@ use crate::{
 
 pub struct Interpreter {}
 
-impl Visitor<Object> for Interpreter {
+impl ExprVisitor<Object> for Interpreter {
     fn visit_binary_expr(&self, expr: &BinaryExpr) -> Result<Object, LoxError> {
         let left = self.evluate(&expr.left).unwrap().into();
         let right = self.evluate(&expr.right).unwrap();
@@ -14,6 +14,7 @@ impl Visitor<Object> for Interpreter {
         if let Object::Num(left_num) = left {
             if let Object::Num(right_num) = right {
                 match expr.operator.tty {
+                    TokenType::PLUS => return Ok(Object::Num(left_num + right_num)),
                     TokenType::MINUS => return Ok(Object::Num(left_num - right_num)),
                     TokenType::SLASH => return Ok(Object::Num(left_num / right_num)),
                     TokenType::STAR => return Ok(Object::Num(left_num * right_num)),
@@ -100,6 +101,17 @@ impl Visitor<Object> for Interpreter {
     }
 }
 
+impl StmtVisitor<()> for Interpreter {
+    fn visit_expression_stmt(&self, stmt: &ExpressionStmt) {
+        self.evluate(&stmt.expression);
+    }
+
+    fn visit_print_stmt(&self, stmt: &PrintStmt) {
+        let value = self.evluate(&stmt.expression).unwrap();
+        println!("{}", self.stringify(&value));
+    }
+}
+
 impl Interpreter {
     fn evluate(&self, expr: &Expr) -> Result<Object, LoxError> {
         match expr {
@@ -111,5 +123,33 @@ impl Interpreter {
     }
     pub fn new() -> Self {
         Self {}
+    }
+    pub fn interpret(&self, statements: &Vec<Stmt>) {
+        for statement in statements {
+            self.execute(statement);
+        }
+    }
+
+    fn execute(&self, stmt: &Stmt) {
+        match stmt {
+            Stmt::ExpressionStmt(n) => n.accept(self),
+            Stmt::PrintStmt(n) => n.accept(self),
+        }
+    }
+
+    fn stringify(&self, obj: &Object) -> String {
+        match obj {
+            Object::Num(n) => {
+                let str = n.to_string();
+                if str.ends_with(".0") {
+                    return str[0..str.len() - 2].to_string();
+                }
+                return str;
+            }
+            Object::Str(s) => s.clone(),
+            Object::Nil => String::from("nil"),
+            Object::True => String::from("true"),
+            Object::False => String::from("false"),
+        }
     }
 }

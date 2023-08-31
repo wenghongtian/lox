@@ -23,8 +23,8 @@ impl Lox {
 
         let mut parser = Parser::new(tokens);
         let interpreter = Interpreter::new();
-        let ast = parser.parse()?;
-        println!("{:#?}", ast);
+        let stmts = parser.parse()?;
+        interpreter.interpret(&stmts);
         Ok(())
     }
 }
