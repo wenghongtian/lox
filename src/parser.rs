@@ -4,7 +4,6 @@ use crate::{
         VarStmt, VariableExpr,
     },
     error::LoxError,
-    lox::Lox,
     token::{Object, Token, TokenType},
 };
 
@@ -29,11 +28,16 @@ pub struct Parser {
 */
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Parser {
-        Parser { tokens, current: 0 }
+    pub fn new() -> Parser {
+        Parser {
+            tokens: vec![],
+            current: 0,
+        }
     }
 
-    pub fn parse(&mut self) -> Result<Vec<Stmt>, LoxError> {
+    pub fn parse(&mut self, tokens: Vec<Token>) -> Result<Vec<Stmt>, LoxError> {
+        self.tokens = tokens;
+        self.current = 0;
         let mut statements = vec![];
         while !self.is_at_end() {
             statements.push(self.declaration()?);
@@ -58,7 +62,7 @@ impl Parser {
         self.consume(
             TokenType::SEMICOLON,
             String::from("Expect ';' after variable declaration."),
-        );
+        )?;
         Ok(Stmt::VarStmt(VarStmt { name, initializer }))
     }
 
@@ -247,10 +251,7 @@ impl Parser {
     }
 
     fn error(&self, token: Token, message: String) -> LoxError {
-        LoxError {
-            msg: message,
-            line: token.line,
-        }
+        LoxError::new_compile(message, token.line)
     }
 
     fn advance(&mut self) -> Token {

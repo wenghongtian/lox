@@ -1,15 +1,18 @@
 use crate::{
     ast::*,
+    environment::Environment,
     error::LoxError,
     token::{Object, TokenType},
 };
 
-pub struct Interpreter {}
+pub struct Interpreter {
+    env: Environment,
+}
 
 impl ExprVisitor<Object> for Interpreter {
     fn visit_binary_expr(&self, expr: &BinaryExpr) -> Result<Object, LoxError> {
-        let left = self.evluate(&expr.left).unwrap().into();
-        let right = self.evluate(&expr.right).unwrap();
+        let left = self.evaluate(&expr.left).unwrap().into();
+        let right = self.evaluate(&expr.right).unwrap();
 
         if let Object::Num(left_num) = left {
             if let Object::Num(right_num) = right {
@@ -64,14 +67,13 @@ impl ExprVisitor<Object> for Interpreter {
                 }
             }
         }
-        Err(LoxError {
-            msg: String::from("RuntimeError: Invalid binary expression."),
-            line: 0,
-        })
+        Err(LoxError::new_runtime(String::from(
+            "RuntimeError: Invalid binary expression.",
+        )))
     }
 
     fn visit_grouping_expr(&self, expr: &GroupingExpr) -> Result<Object, LoxError> {
-        self.evluate(&expr.expression)
+        self.evaluate(&expr.expression)
     }
 
     fn visit_literal_expr(&self, expr: &LiteralExpr) -> Result<Object, LoxError> {
@@ -79,7 +81,7 @@ impl ExprVisitor<Object> for Interpreter {
     }
 
     fn visit_unary_expr(&self, expr: &UnaryExpr) -> Result<Object, LoxError> {
-        let right = self.evluate(&expr.right).unwrap();
+        let right = self.evaluate(&expr.right).unwrap();
 
         if expr.operator.tty == TokenType::MINUS {
             if let Object::Num(num) = right {
@@ -94,46 +96,67 @@ impl ExprVisitor<Object> for Interpreter {
                 return Ok(Object::False);
             }
         }
-        Err(LoxError {
-            msg: String::from("RuntimeError: The expression after mius expected boolean."),
-            line: 0,
-        })
+        Err(LoxError::new_runtime(String::from(
+            "RuntimeError: The expression after mius expected boolean.",
+        )))
+    }
+
+    fn visit_variable_expr(&self, unary_expr: &VariableExpr) -> Result<Object, LoxError> {
+        self.env.get(&unary_expr.name)
     }
 }
 
 impl StmtVisitor<()> for Interpreter {
-    fn visit_expression_stmt(&self, stmt: &ExpressionStmt) {
-        self.evluate(&stmt.expression);
+    fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<(), LoxError> {
+        self.evaluate(&stmt.expression)?;
+        Ok(())
     }
 
-    fn visit_print_stmt(&self, stmt: &PrintStmt) {
-        let value = self.evluate(&stmt.expression).unwrap();
+    fn visit_print_stmt(&self, stmt: &PrintStmt) -> Result<(), LoxError> {
+        let value = self.evaluate(&stmt.expression)?;
         println!("{}", self.stringify(&value));
+        Ok(())
+    }
+
+    fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<(), LoxError> {
+        let mut value = Object::Nil;
+        if stmt.initializer.is_some() {
+            let ini = stmt.initializer.as_ref().clone().unwrap();
+            value = self.evaluate(&ini)?;
+        }
+
+        self.env.define(stmt.name.lexeme.clone(), value);
+        Ok(())
     }
 }
 
 impl Interpreter {
-    fn evluate(&self, expr: &Expr) -> Result<Object, LoxError> {
+    fn evaluate(&self, expr: &Expr) -> Result<Object, LoxError> {
         match expr {
             Expr::Binary(n) => n.accept(self),
             Expr::Grouping(n) => n.accept(self),
             Expr::Literal(n) => n.accept(self),
             Expr::Unary(n) => n.accept(self),
+            Expr::Variable(n) => n.accept(self),
         }
     }
     pub fn new() -> Self {
-        Self {}
-    }
-    pub fn interpret(&self, statements: &Vec<Stmt>) {
-        for statement in statements {
-            self.execute(statement);
+        Self {
+            env: Environment::new(),
         }
     }
+    pub fn interpret(&mut self, statements: &Vec<Stmt>) -> Result<(), LoxError> {
+        for statement in statements {
+            self.execute(statement)?;
+        }
+        Ok(())
+    }
 
-    fn execute(&self, stmt: &Stmt) {
+    fn execute(&mut self, stmt: &Stmt) -> Result<(), LoxError> {
         match stmt {
             Stmt::ExpressionStmt(n) => n.accept(self),
             Stmt::PrintStmt(n) => n.accept(self),
+            Stmt::VarStmt(n) => n.accept(self),
         }
     }
 

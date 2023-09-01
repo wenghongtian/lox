@@ -40,25 +40,25 @@ pub trait ExprVisitor<T> {
 }
 
 pub trait StmtVisitor<T> {
-    fn visit_expression_stmt(&self, stmt: &ExpressionStmt);
-    fn visit_print_stmt(&self, stmt: &PrintStmt);
-    fn visit_var_stmt(&self, stmt: &VarStmt);
+    fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<T, LoxError>;
+    fn visit_print_stmt(&self, stmt: &PrintStmt) -> Result<T, LoxError>;
+    fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Result<T, LoxError>;
 }
 
 impl ExpressionStmt {
-    pub fn accept<T>(&self, visitor: &dyn StmtVisitor<T>) {
+    pub fn accept<T>(&self, visitor: &mut dyn StmtVisitor<T>) -> Result<T, LoxError> {
         visitor.visit_expression_stmt(self)
     }
 }
 
 impl PrintStmt {
-    pub fn accept<T>(&self, visitor: &dyn StmtVisitor<T>) {
+    pub fn accept<T>(&self, visitor: &dyn StmtVisitor<T>) -> Result<T, LoxError> {
         visitor.visit_print_stmt(self)
     }
 }
 
 impl VarStmt {
-    pub fn accept<T>(&self, visitor: &dyn StmtVisitor<T>) {
+    pub fn accept<T>(&self, visitor: &mut dyn StmtVisitor<T>) -> Result<T, LoxError> {
         visitor.visit_var_stmt(self)
     }
 }

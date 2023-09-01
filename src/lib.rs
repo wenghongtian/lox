@@ -7,3 +7,4 @@ mod macros;
 mod ast;
 mod parser;
 mod interpreter;
+mod environment;

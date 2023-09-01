@@ -38,9 +38,9 @@ pub struct Scanner {
 }
 
 impl Scanner {
-    pub fn new(source: String) -> Self {
+    pub fn new() -> Self {
         Self {
-            source: source.chars().collect(),
+            source: vec![],
             tokens: vec![],
             start: 0,
             current: 0,
@@ -48,7 +48,17 @@ impl Scanner {
         }
     }
 
-    pub fn scan_tokens(&mut self) -> Result<&Vec<Token>, LoxError> {
+    fn init(&mut self, source: String) {
+        self.source = source.chars().collect();
+        self.tokens = vec![];
+        self.start = 0;
+        self.current = 0;
+        self.line = 1;
+    }
+
+    pub fn scan_tokens(&mut self, source: String) -> Result<&Vec<Token>, LoxError> {
+        self.init(source);
+
         while !self.is_at_end() {
             self.start = self.current;
             let c = self.advance();
@@ -113,9 +123,9 @@ impl Scanner {
                 '"' => self.string()?,
                 c if self.is_alpha(c) => self.identifier(),
                 _ => {
-                    return Err(LoxError::new(
-                        self.line,
+                    return Err(LoxError::new_compile(
                         String::from("Unexpected character."),
+                        self.line,
                     ))
                 }
             }
@@ -170,9 +180,9 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            return Err(LoxError::new(
-                self.line,
+            return Err(LoxError::new_compile(
                 String::from("Unterminated string."),
+                self.line,
             ));
         }
         self.advance();

@@ -35,10 +35,10 @@ fn run_file(path: &str) -> io::Result<()> {
 }
 
 fn run_prompt() {
+    let mut l = Lox::new();
     loop {
         print!("> ");
         io::stdout().flush();
-        let mut l = Lox::new();
         let mut buf = String::new();
         let _ = io::stdin().read_line(&mut buf);
         if buf.starts_with("exit\n") {
@@ -47,7 +47,7 @@ fn run_prompt() {
         if buf.is_empty() {
             break;
         } else {
-            l.run(buf);
+            l.run(buf).unwrap();
             l.had_error = false;
         }
     }
